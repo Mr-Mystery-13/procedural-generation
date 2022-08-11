@@ -24,6 +24,7 @@ function setup(){
      *  are all defined in islands.js. We'll put our new work in here!
      */
     initializeGrid(canvasDimensions, margin);
+    placeTree(4,15)
 }
 
 function draw(){
@@ -43,6 +44,38 @@ function draw(){
  *          minimum number of trees to exit the loop early
  *      5. Call this function in setup() to add trees to the grid!
  */
+function placeTree(minTrees, maxTrees) {
+
+    let xCoord
+    let treeBox
+    let yCoord
+    
+    for( let numTree = 0 ; numTree < maxTrees ; numTree++) {
+        let valid = false;
+
+        while (!valid) {
+            xCoord = randomNumberGenerator(myGrid.lowMargin, myGrid.highXMargin)
+            yCoord = randomNumberGenerator(myGrid.lowMargin, myGrid.highYMargin)
+
+            treeBox = myGrid.boxArray[xCoord][yCoord]
+
+            valid = treeBox.currentState === BoxStates.land;
+        }
+
+        treeBox.setState(BoxStates.tree);
+
+        if ( numTree >= minTrees) {
+            let currentStopChance = breakChance + (
+                (1 - breakChance) /
+                ((maxTrees - minTrees) - (numTree - minTrees))
+            )
+
+            if (Math.random() < currentStopChance) {
+                break
+            }
+        }
+    }
+}
 
 /**
  *  @TODO Write a function that spreads more trees on the grid each time it runs
@@ -57,8 +90,32 @@ function draw(){
  *          the number of neighboring trees
  */
 
+function spreadTrees ( spreadChance ) {
+    for (let x = myGrid.lowMargin; x < myGrid.highXMargin; x++) {
+        for (let y = myGrid.lowMargin; y < myGrid.highYMargin; y ++) {
+            let currentBox = myGrid.boxArray[x][y];
+
+            if (currentBox.currentState === BoxStates.land) {
+                let neighbors = checkNeighbors(myGrid.statesArray(), x, y, BoxStates.tree)
+
+                if (Math.random() < neighbors * spreadChance) {
+                    currentBox.setState(BoxStates.tree)
+                }
+            }
+        }
+    }
+}
+
 /**
  *  @TODO Call the function to spread trees on the press of a key
  *      Note that our previous method of checking a pressed key runs
  *      every frame that the key is pressed, which isn't what we want!
  */
+let generations = 1
+
+function keyReleased () {
+    if (keyCode === 32) {
+        spreadTrees(0.15)
+        generations++
+    }
+}
